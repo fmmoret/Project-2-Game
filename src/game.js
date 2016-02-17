@@ -16,6 +16,7 @@
     var cursors;
     var jumpButton;
     var facing = 'right';
+    var timeToFlip = 3000;
 
     // Physical variables
     var gravityDirection = {x: 0, y: 1};
@@ -69,6 +70,22 @@
         game.load.image('platform', 'platform.png');
     }
 
+    function flip() {
+        console.log(gravityDirection, 'before');
+        /*if (gravityDirection.y != 0) {
+            gravityDirection.x = -gravityDirection.y;
+            gravityDirection.y = 0;
+        } else if (gravityDirection.x != 0) {
+            gravityDirection.y = -gravityDirection.x;
+            gravityDirection.x = 0;
+        }*/
+        gravityDirection.y *= -1;
+        console.log(gravityDirection, 'after');
+        console.log(player.body.gravity);
+
+        changeGravity(gravityDirection);
+        console.log(player.body.gravity);
+    }
     // Create the environment
     function create() {
         // The player
@@ -92,11 +109,12 @@
         // Set up input
         cursors = game.input.keyboard.createCursorKeys();
         jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+        setInterval(flip, timeToFlip);
     }
 
+
     // Update loop
-    function update() {
-        // Handle platform collisions
+    function update(state) {
         game.physics.arcade.collide(player, platforms);
 
         // Stop the player
