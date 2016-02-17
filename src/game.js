@@ -35,9 +35,28 @@
         return {x: scale*vector.x, y: scale*vector.y};
     }
 
-    function playerCanJump() {
-        return (player.body.touching.up || player.body.touching.down || player.body.touching.right || player.body.touching.left);
+    function playerCanJump(dir) {
+        if (dir.x === 0 && dir.y > 0) {
+            return (player.body.touching.down || player.body.touching.right || player.body.touching.left);
+        }
+        if (dir.x === 0 && dir.y < 0) {
+            return (player.body.touching.up || player.body.touching.right || player.body.touching.left);
+        }
+        if (dir.y === 0 && dir.x > 0) {
+            return (player.body.touching.up || player.body.touching.down || player.body.touching.right);
+        }
+        if (dir.y === 0 && dir.x < 0) {
+            return (player.body.touching.up || player.body.touching.down || player.body.touching.left);
+        }
     }
+
+    function changeGravity(dir) {
+        gravityDirection = dir;
+        var gravity = scaleVector(gravityStrength, gravityDirection);
+        player.body.gravity.x = gravity.x;
+        player.body.gravity.y = gravity.y;
+    }
+    window.cg = changeGravity;
 
     // Preload assets
     function preload() {
@@ -52,15 +71,16 @@
 
     // Create the environment
     function create() {
+        // The player
         player = game.add.sprite(200, 200, 'player');
         player.animations.add('left', [0, 1, 2, 3], 10, true);
         player.animations.add('right', [5, 6, 7, 8], 10, true);
-
+        // Set up player physics
         game.physics.arcade.enable(player);
-
         player.body.collideWorldBounds = true;
         player.body.gravity.y = scaleVector(gravityStrength, gravityDirection).y;
 
+        // Create platforms
         platforms = game.add.physicsGroup();
         for (var i=0; i < platformList.length; i++) {
             var p = platformList[i];
@@ -69,16 +89,24 @@
         }
         platforms.setAll('body.immovable', true);
 
+        // Set up input
         cursors = game.input.keyboard.createCursorKeys();
         jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
     }
 
     // Update loop
     function update() {
+        // Handle platform collisions
         game.physics.arcade.collide(player, platforms);
 
-        player.body.velocity.x = 0;
+        // Stop the player
+        if (gravityDirection.x === 0) {
+            player.body.velocity.x = 0;
+        } else if(gravityDirection.y === 0) {
+            player.body.velocity.y = 0;
+        }
 
+        // Handle moving input
         if (cursors.left.isDown) {
             player.body.velocity.x = -moveVelocity;
             player.animations.play('left');
@@ -91,8 +119,13 @@
             player.animations.stop(null, true);
         }
 
-        if (jumpButton.isDown && playerCanJump()) {
-            player.body.velocity.y = scaleVector(-jumpVelocity, gravityDirection).y;
+        if (jumpButton.isDown && playerCanJump(gravityDirection)) {
+            var jump = scaleVector(-jumpVelocity, gravityDirection);
+            if (gravityDirection.x === 0) {
+                player.body.velocity.y = jump.y;
+            } else if(gravityDirection.y === 0) {
+                player.body.velocity.x = jump.x;
+            }
         }
     }
 
