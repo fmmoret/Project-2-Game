@@ -13,6 +13,7 @@
     var platforms;
     var cursors;
     var jumpButton;
+    var facing = 'right';
 
     // Preload assets
     function preload() {
@@ -21,13 +22,15 @@
         game.load.baseURL = 'assets/';
         game.load.crossOrigin = 'anonymous';
 
-        game.load.image('player', 'dude.png');
+        game.load.spritesheet('player', 'dude.png', 32, 48);
         game.load.image('platform', 'platform.png');
     }
 
     // Create the environment
     function create() {
-        player = game.add.sprite(100, 200, 'player');
+        player = game.add.sprite(200, 200, 'player');
+        player.animations.add('left', [0, 1, 2, 3], 10, true);
+        player.animations.add('right', [5, 6, 7, 8], 10, true);
 
         game.physics.arcade.enable(player);
 
@@ -54,12 +57,19 @@
 
         if (cursors.left.isDown) {
             player.body.velocity.x = -250;
+            player.animations.play('left');
+            facing = 'left';
         }
         else if (cursors.right.isDown) {
             player.body.velocity.x = 250;
+            player.animations.play('right');
+            facing = 'right';
+        }
+        else {
+            player.animations.stop(null, true);
         }
 
-        if (jumpButton.isDown && (player.body.onFloor() || player.body.touching.down || player.body.touching.right)) {
+        if (jumpButton.isDown && (player.body.onFloor() || player.body.touching.down || player.body.touching.right || player.body.touching.left)) {
             player.body.velocity.y = -400;
         }
     }
