@@ -8,12 +8,36 @@
 (function() {
 
     // Game variables
-    var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game', { preload: preload, create: create, update: update });
+    var stageWidth = window.innerWidth;
+    var stageHeight = window.innerHeight;
+    var game = new Phaser.Game(stageWidth, stageHeight, Phaser.AUTO, 'game', { preload: preload, create: create, update: update });
     var player;
     var platforms;
     var cursors;
     var jumpButton;
     var facing = 'right';
+
+    // Physical variables
+    var gravityDirection = {x: 0, y: 1};
+    var gravityStrength = 500;
+    var jumpVelocity = 400;
+    var moveVelocity = 250;
+
+    var platformList = [
+        {x: 0, y: 0, width: stageWidth, height: 20},
+        {x: 0, y: 0, width: 20, height: stageHeight},
+        {x: stageWidth-20, y: 0, width: 20, height: stageHeight},
+        {x: 0, y: stageHeight-20, width: stageWidth, height: 20},
+    ];
+
+    // Helper functions
+    function scaleVector(scale, vector) {
+        return {x: scale*vector.x, y: scale*vector.y};
+    }
+
+    function playerCanJump() {
+        return (player.body.touching.up || player.body.touching.down || player.body.touching.right || player.body.touching.left);
+    }
 
     // Preload assets
     function preload() {
@@ -35,14 +59,14 @@
         game.physics.arcade.enable(player);
 
         player.body.collideWorldBounds = true;
-        player.body.gravity.y = 500;
+        player.body.gravity.y = scaleVector(gravityStrength, gravityDirection).y;
 
         platforms = game.add.physicsGroup();
-
-        platforms.create(500, 150, 'platform');
-        platforms.create(-200, 300, 'platform');
-        platforms.create(400, 450, 'platform');
-
+        for (var i=0; i < platformList.length; i++) {
+            var p = platformList[i];
+            var plat = platforms.create(p.x, p.y, 'platform');
+            plat.scale.setTo(p.width/100, p.height/100);
+        }
         platforms.setAll('body.immovable', true);
 
         cursors = game.input.keyboard.createCursorKeys();
@@ -56,21 +80,19 @@
         player.body.velocity.x = 0;
 
         if (cursors.left.isDown) {
-            player.body.velocity.x = -250;
+            player.body.velocity.x = -moveVelocity;
             player.animations.play('left');
             facing = 'left';
-        }
-        else if (cursors.right.isDown) {
-            player.body.velocity.x = 250;
+        } else if (cursors.right.isDown) {
+            player.body.velocity.x = moveVelocity;
             player.animations.play('right');
             facing = 'right';
-        }
-        else {
+        } else {
             player.animations.stop(null, true);
         }
 
-        if (jumpButton.isDown && (player.body.onFloor() || player.body.touching.down || player.body.touching.right || player.body.touching.left)) {
-            player.body.velocity.y = -400;
+        if (jumpButton.isDown && playerCanJump()) {
+            player.body.velocity.y = scaleVector(-jumpVelocity, gravityDirection).y;
         }
     }
 
