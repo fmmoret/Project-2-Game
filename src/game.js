@@ -71,10 +71,14 @@
     }
 
     function flip() {
-        gravityDirection.y *= -1;
+        var directions = [{x:1, y:0}, {x:-1, y:0}, {x:0, y:1}, {x:0, y:-1}];
+        var dirIndex = Math.floor(Math.random() * (4));
+        console.log(dirIndex);
+        gravityDirection = directions[dirIndex];
         changeGravity(gravityDirection);
         console.log(player.body.gravity, 'gravity');
     }
+
     // Create the environment
     function create() {
         // The player
