@@ -108,11 +108,33 @@
 
         // Handle moving input
         if (cursors.left.isDown) {
-            player.body.velocity.x = -moveVelocity;
+            if (gravityDirection.x === 0 && gravityDirection.y > 0) {
+                player.body.velocity.x = -moveVelocity;
+            }
+            if (gravityDirection.x === 0 && gravityDirection.y < 0) {
+                player.body.velocity.x = -moveVelocity;
+            }
+            if (gravityDirection.y === 0 && gravityDirection.x > 0) {
+                player.body.velocity.y = moveVelocity;
+            }
+            if (gravityDirection.y === 0 && gravityDirection.x < 0) {
+                player.body.velocity.y = -moveVelocity;
+            }
             player.animations.play('left');
             facing = 'left';
         } else if (cursors.right.isDown) {
-            player.body.velocity.x = moveVelocity;
+            if (gravityDirection.x === 0 && gravityDirection.y > 0) {
+                player.body.velocity.x = moveVelocity;
+            }
+            if (gravityDirection.x === 0 && gravityDirection.y < 0) {
+                player.body.velocity.x = moveVelocity;
+            }
+            if (gravityDirection.y === 0 && gravityDirection.x > 0) {
+                player.body.velocity.y = -moveVelocity;
+            }
+            if (gravityDirection.y === 0 && gravityDirection.x < 0) {
+                player.body.velocity.y = moveVelocity;
+            }
             player.animations.play('right');
             facing = 'right';
         } else {
