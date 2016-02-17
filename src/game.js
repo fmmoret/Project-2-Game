@@ -71,20 +71,9 @@
     }
 
     function flip() {
-        console.log(gravityDirection, 'before');
-        /*if (gravityDirection.y != 0) {
-            gravityDirection.x = -gravityDirection.y;
-            gravityDirection.y = 0;
-        } else if (gravityDirection.x != 0) {
-            gravityDirection.y = -gravityDirection.x;
-            gravityDirection.x = 0;
-        }*/
         gravityDirection.y *= -1;
-        console.log(gravityDirection, 'after');
-        console.log(player.body.gravity);
-
         changeGravity(gravityDirection);
-        console.log(player.body.gravity);
+        console.log(player.body.gravity, 'gravity');
     }
     // Create the environment
     function create() {
