@@ -16,7 +16,7 @@
     var cursors;
     var jumpButton;
     var facing = 'right';
-    var timeToFlip = 3000;
+    var timeToFlip = 6000;
 
     // Physical variables
     var gravityDirection = {x: 0, y: 1};
@@ -66,29 +66,39 @@
         game.load.baseURL = 'assets/';
         game.load.crossOrigin = 'anonymous';
 
-        game.load.spritesheet('player', 'dude.png', 32, 48);
+        game.load.spritesheet('player', 'dude.png', 48, 48);
         game.load.image('platform', 'platform.png');
     }
 
     function flip() {
         var directions = [{x:1, y:0}, {x:-1, y:0}, {x:0, y:1}, {x:0, y:-1}];
+        var rotation = [Math.PI*3.0/2.0, Math.PI/2, 0, Math.PI];
         var dirIndex = Math.floor(Math.random() * (4));
         console.log(dirIndex);
         gravityDirection = directions[dirIndex];
         changeGravity(gravityDirection);
+        player.rotation = rotation[dirIndex];
+        if (dirIndex == 3) {
+            player.scale.x = -1;
+        } else {
+            player.scale.x = 1;
+        }
         console.log(player.body.gravity, 'gravity');
+
     }
 
     // Create the environment
     function create() {
         // The player
         player = game.add.sprite(200, 200, 'player');
+        window.player = player;
         player.animations.add('left', [0, 1, 2, 3], 10, true);
         player.animations.add('right', [5, 6, 7, 8], 10, true);
         // Set up player physics
         game.physics.arcade.enable(player);
         player.body.collideWorldBounds = true;
         player.body.gravity.y = scaleVector(gravityStrength, gravityDirection).y;
+        player.anchor.setTo(.5,.5);
 
         // Create platforms
         platforms = game.add.physicsGroup();
@@ -102,7 +112,9 @@
         // Set up input
         cursors = game.input.keyboard.createCursorKeys();
         jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-        setInterval(flip, timeToFlip);
+        var timer = game.time.events.add(timeToFlip, flip);
+        console.log(timer);
+        timer.loop = true;
     }
 
 
