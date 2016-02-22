@@ -55,6 +55,14 @@
     }
 
     function addPlatform(plat) {
+        if (plat.width < 0) {
+            plat.x += plat.width;
+            plat.width *= -1;
+        }
+        if (plat.height < 0) {
+            plat.y += plat.height;
+            plat.height *= -1;
+        }
         platforms.push(plat);
         getCode();
     }
@@ -82,7 +90,7 @@
         drawPlatforms();
         getCode();
     }
-    
+
     // Add event listeners
     window.addEventListener('DOMContentLoaded', onLoaded);
 
