@@ -22,8 +22,10 @@
     var gravityDirection = {x: 0, y: 1};
 
     // Constants
+    var GOAL_POSITION = {x: 410, y: 130};
+    var START_POSITION = {x: 50, y: stageHeight - 70};
     var GRAVITY_STRENGTH = 500;
-    var JUMP_VELOCITY = 250;
+    var JUMP_VELOCITY = 300;
     var MOVE_VELOCITY = 250;
     var TIME_TO_FLIP = 6000;
     var WARNING_TIME = 3000;
@@ -119,8 +121,8 @@
     }
 
     function goalReached() {
-        alert('You done it');
-        window.location.reload();
+        console.log('YOU WIN');
+        player.body.position.setTo(START_POSITION.x, START_POSITION.y);
     }
 
     // Preload assets
@@ -139,11 +141,11 @@
     // Create the environment
     function create() {
         // The goal
-        goal = game.add.sprite(410, 130, 'goal');
+        goal = game.add.sprite(GOAL_POSITION.x, GOAL_POSITION.y, 'goal');
         game.physics.arcade.enable(goal);
 
         // The player
-        player = game.add.sprite(50, stageHeight-50, 'player');
+        player = game.add.sprite(START_POSITION.x, START_POSITION.y, 'player');
         window.player = player;
         player.animations.add('left', [0, 1, 2, 3], 10, true);
         player.animations.add('right', [5, 6, 7, 8], 10, true);
