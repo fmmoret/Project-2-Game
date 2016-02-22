@@ -8,27 +8,40 @@
 (function() {
 
     // Game variables
-    var stageWidth = window.innerWidth;
-    var stageHeight = window.innerHeight;
-    var game = new Phaser.Game(stageWidth, stageHeight, Phaser.AUTO, 'game', { preload: preload, create: create, update: update });
+    var stageWidth = 800;
+    var stageHeight = 600;
+    var game = new Phaser.Game(stageWidth, stageHeight, Phaser.AUTO, 'game', {preload: preload, create: create, update: update});
     var player;
+    var goal;
     var platforms;
+    var downArrow;
     var cursors;
     var jumpButton;
+    var flipTimer;
     var facing = 'right';
-    var timeToFlip = 6000;
-
-    // Physical variables
     var gravityDirection = {x: 0, y: 1};
-    var gravityStrength = 500;
-    var jumpVelocity = 400;
-    var moveVelocity = 250;
 
-    var platformList = [
+    // Constants
+    var GRAVITY_STRENGTH = 500;
+    var JUMP_VELOCITY = 400;
+    var MOVE_VELOCITY = 250;
+    var TIME_TO_FLIP = 6000;
+    var WARNING_TIME = 3000;
+    var GRAVITY_DIRECTIONS = [{x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1}];
+    var ROTATIONS = [Math.PI*3.0/2.0, Math.PI/2, 0, Math.PI];
+
+    // The platforms
+    var PLATFORMS = [
         {x: 0, y: 0, width: stageWidth, height: 20},
         {x: 0, y: 0, width: 20, height: stageHeight},
         {x: stageWidth-20, y: 0, width: 20, height: stageHeight},
         {x: 0, y: stageHeight-20, width: stageWidth, height: 20},
+        {x: 150, y: 420, width: 100, height: 50},
+        {x: 500, y: 350, width: 75, height: 100},
+        {x: 300, y: 100, width: 200, height: 25},
+        {x: 90, y: 200, width: 150, height: 100},
+        {x: 350, y: 250, width: 100, height: 100},
+        {x: 650, y: 200, width: 50, height: 150},
     ];
 
     // Helper functions
@@ -36,28 +49,48 @@
         return {x: scale*vector.x, y: scale*vector.y};
     }
 
-    function playerCanJump(dir) {
-        if (dir.x === 0 && dir.y > 0) {
-            return (player.body.touching.down || player.body.touching.right || player.body.touching.left);
+    function playerCanJump() {
+        if (gravityDirection.x === 0 && gravityDirection.y > 0) {
+            return (player.body.touching.down);// || player.body.touching.right || player.body.touching.left);
         }
-        if (dir.x === 0 && dir.y < 0) {
-            return (player.body.touching.up || player.body.touching.right || player.body.touching.left);
+        if (gravityDirection.x === 0 && gravityDirection.y < 0) {
+            return (player.body.touching.up); // || player.body.touching.right || player.body.touching.left);
         }
-        if (dir.y === 0 && dir.x > 0) {
-            return (player.body.touching.up || player.body.touching.down || player.body.touching.right);
+        if (gravityDirection.y === 0 && gravityDirection.x > 0) {
+            return (player.body.touching.right); // || player.body.touching.up || player.body.touching.down);
         }
-        if (dir.y === 0 && dir.x < 0) {
-            return (player.body.touching.up || player.body.touching.down || player.body.touching.left);
+        if (gravityDirection.y === 0 && gravityDirection.x < 0) {
+            return (player.body.touching.left); // || player.body.touching.up || player.body.touching.down);
         }
     }
 
-    function changeGravity(dir) {
+    function setGravity(dir) {
         gravityDirection = dir;
-        var gravity = scaleVector(gravityStrength, gravityDirection);
-        player.body.gravity.x = gravity.x;
-        player.body.gravity.y = gravity.y;
+        var gravity = scaleVector(GRAVITY_STRENGTH, dir);
+        player.body.gravity.setTo(gravity.x, gravity.y);
     }
-    window.cg = changeGravity;
+
+    function changeGravity(index) {
+        setGravity(GRAVITY_DIRECTIONS[index]);
+        player.rotation = ROTATIONS[index];
+        player.scale.x = (index === 3) ? -1 : 1;
+    }
+
+    function warnAndFlip() {
+        // warn and flip gravity
+        var index = Math.floor(Math.random() * 4);
+        downArrow.rotation = ROTATIONS[index];
+        downArrow.alpha = 1;
+        setTimeout(function() {
+            downArrow.alpha = 0;
+            changeGravity(index);
+        }, WARNING_TIME);
+    }
+
+    function goalReached() {
+        alert('You done it');
+        window.location.reload();
+    }
 
     // Preload assets
     function preload() {
@@ -67,28 +100,17 @@
         game.load.crossOrigin = 'anonymous';
 
         game.load.spritesheet('player', 'dude.png', 48, 48);
+        game.load.image('goal', 'diamond.png');
         game.load.image('platform', 'platform.png');
-    }
-
-    function flip() {
-        var directions = [{x:1, y:0}, {x:-1, y:0}, {x:0, y:1}, {x:0, y:-1}];
-        var rotation = [Math.PI*3.0/2.0, Math.PI/2, 0, Math.PI];
-        var dirIndex = Math.floor(Math.random() * (4));
-        console.log(dirIndex);
-        gravityDirection = directions[dirIndex];
-        changeGravity(gravityDirection);
-        player.rotation = rotation[dirIndex];
-        if (dirIndex == 3) {
-            player.scale.x = -1;
-        } else {
-            player.scale.x = 1;
-        }
-        console.log(player.body.gravity, 'gravity');
-
+        game.load.image('arrow', 'down-arrow.png');
     }
 
     // Create the environment
     function create() {
+        // The goal
+        goal = game.add.sprite(400, 50, 'goal');
+        game.physics.arcade.enable(goal);
+
         // The player
         player = game.add.sprite(200, 200, 'player');
         window.player = player;
@@ -97,30 +119,42 @@
         // Set up player physics
         game.physics.arcade.enable(player);
         player.body.collideWorldBounds = true;
-        player.body.gravity.y = scaleVector(gravityStrength, gravityDirection).y;
-        player.anchor.setTo(.5,.5);
+        player.body.gravity.y = GRAVITY_STRENGTH;
+        player.anchor.setTo(0.5, 0.5);
 
         // Create platforms
         platforms = game.add.physicsGroup();
-        for (var i=0; i < platformList.length; i++) {
-            var p = platformList[i];
-            var plat = platforms.create(p.x, p.y, 'platform');
-            plat.scale.setTo(p.width/100, p.height/100);
+        for (var i = 0; i < PLATFORMS.length; i++) {
+            var data = PLATFORMS[i];
+            var platform = platforms.create(data.x, data.y, 'platform');
+            platform.scale.setTo(data.width/100, data.height/100);
         }
         platforms.setAll('body.immovable', true);
+
+        // Create the warning arrow
+        downArrow = game.add.sprite(stageWidth/2, stageHeight/2, 'arrow');
+        downArrow.alpha = 0;
+        downArrow.scale.setTo(0.5, 0.5);
+        downArrow.anchor.setTo(0.5, 0.5);
 
         // Set up input
         cursors = game.input.keyboard.createCursorKeys();
         jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-        var timer = game.time.events.add(timeToFlip, flip);
-        console.log(timer);
-        timer.loop = true;
+
+        // Set up gravity flipping timer
+        flipTimer = game.time.events.add(TIME_TO_FLIP, warnAndFlip);
+        flipTimer.loop = true;
     }
 
 
-    // Update loop
-    function update(state) {
+    // Main update loop
+    function update() {
         game.physics.arcade.collide(player, platforms);
+
+        // Check if goal reached
+        if (game.physics.arcade.overlap(player, goal)) {
+            goalReached();
+        }
 
         // Stop the player
         if (gravityDirection.x === 0) {
@@ -132,31 +166,31 @@
         // Handle moving input
         if (cursors.left.isDown) {
             if (gravityDirection.x === 0 && gravityDirection.y > 0) {
-                player.body.velocity.x = -moveVelocity;
+                player.body.velocity.x = -MOVE_VELOCITY;
             }
             if (gravityDirection.x === 0 && gravityDirection.y < 0) {
-                player.body.velocity.x = -moveVelocity;
+                player.body.velocity.x = -MOVE_VELOCITY;
             }
             if (gravityDirection.y === 0 && gravityDirection.x > 0) {
-                player.body.velocity.y = moveVelocity;
+                player.body.velocity.y = MOVE_VELOCITY;
             }
             if (gravityDirection.y === 0 && gravityDirection.x < 0) {
-                player.body.velocity.y = -moveVelocity;
+                player.body.velocity.y = -MOVE_VELOCITY;
             }
             player.animations.play('left');
             facing = 'left';
         } else if (cursors.right.isDown) {
             if (gravityDirection.x === 0 && gravityDirection.y > 0) {
-                player.body.velocity.x = moveVelocity;
+                player.body.velocity.x = MOVE_VELOCITY;
             }
             if (gravityDirection.x === 0 && gravityDirection.y < 0) {
-                player.body.velocity.x = moveVelocity;
+                player.body.velocity.x = MOVE_VELOCITY;
             }
             if (gravityDirection.y === 0 && gravityDirection.x > 0) {
-                player.body.velocity.y = -moveVelocity;
+                player.body.velocity.y = -MOVE_VELOCITY;
             }
             if (gravityDirection.y === 0 && gravityDirection.x < 0) {
-                player.body.velocity.y = moveVelocity;
+                player.body.velocity.y = MOVE_VELOCITY;
             }
             player.animations.play('right');
             facing = 'right';
@@ -164,8 +198,8 @@
             player.animations.stop(null, true);
         }
 
-        if (jumpButton.isDown && playerCanJump(gravityDirection)) {
-            var jump = scaleVector(-jumpVelocity, gravityDirection);
+        if (jumpButton.isDown && playerCanJump()) {
+            var jump = scaleVector(-JUMP_VELOCITY, gravityDirection);
             if (gravityDirection.x === 0) {
                 player.body.velocity.y = jump.y;
             } else if(gravityDirection.y === 0) {
