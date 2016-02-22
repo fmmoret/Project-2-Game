@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Gravity Shifter - Level Editor</title>
+        <script type="text/javascript" src="src/editor.js"></script>
+        <style type="text/css">
+        body {
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        #editor {
+            float: left;
+            height: 600px;
+            margin: 0;
+            padding: 0;
+            width: 800px;
+        }
+        canvas {
+            border: 1px solid black;
+            margin: 0;
+        }
+        #code {
+            border: 1px solid black;
+            font-family: Consolas, monospace;
+            float: right;
+            width: 300px;
+            height: 100%;
+            overflow: scroll;
+        }
+        </style>
+    </head>
+    <body>
+        <div id="editor">
+            <canvas width=800 height=600 />
+        </div>
+        <button id="btn-undo">Undo</button>
+        <div id="code"></div>
+    </body>
+</html>
