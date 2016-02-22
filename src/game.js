@@ -23,7 +23,7 @@
 
     // Constants
     var GRAVITY_STRENGTH = 500;
-    var JUMP_VELOCITY = 400;
+    var JUMP_VELOCITY = 250;
     var MOVE_VELOCITY = 250;
     var TIME_TO_FLIP = 6000;
     var WARNING_TIME = 3000;
@@ -31,7 +31,8 @@
     var ROTATIONS = [Math.PI*3.0/2.0, Math.PI/2, 0, Math.PI];
 
     // The platforms
-    var PLATFORMS = [
+    // #1
+    /*var PLATFORMS = [
         {x: 0, y: 0, width: stageWidth, height: 20},
         {x: 0, y: 0, width: 20, height: stageHeight},
         {x: stageWidth-20, y: 0, width: 20, height: stageHeight},
@@ -42,7 +43,37 @@
         {x: 90, y: 200, width: 150, height: 100},
         {x: 350, y: 250, width: 100, height: 100},
         {x: 650, y: 200, width: 50, height: 150},
+    ];*/
+    // #2
+    var PLATFORMS = [
+        {x: 0, y: 0, width: stageWidth, height: 20},
+        {x: 0, y: 0, width: 20, height: stageHeight},
+        {x: stageWidth-20, y: 0, width: 20, height: stageHeight},
+        {x: 0, y: stageHeight-20, width: stageWidth, height: 20},
+
+        {x: 325, y: 100, width: 175, height: 25},
+        {x: 325, y: 250, width: 175, height: 25},
+        {x: 500, y: 100, width: 25, height: 175},
+        {x: 250, y: 180, width: 200, height: 10},
+
+        {x: 225, y: 0, width: 25, height: 325},
+
+        {x: 265, y: 380, width: 10, height: 105},
+        {x: 365, y: 380, width: 10, height: 75},
+        {x: 265, y: 380, width: 110, height: 10},
+        {x: 155, y: 420, width: 110, height: 10},
+
+        {x: 445, y: 360, width: 10, height: 75},
+        {x: 545, y: 360, width: 10, height: 140},
+        {x: 545, y: 360, width: 80, height: 10},
+        {x: 445, y: 490, width: 110, height: 10},
+
+        {x: 605, y: 180, width: 90, height: 10},
+        {x: 685, y: 20, width: 10, height: 170},
+
+        {x: 605, y: 180, width: 10, height: 180},
     ];
+
 
     // Helper functions
     function scaleVector(scale, vector) {
@@ -108,11 +139,11 @@
     // Create the environment
     function create() {
         // The goal
-        goal = game.add.sprite(400, 50, 'goal');
+        goal = game.add.sprite(410, 130, 'goal');
         game.physics.arcade.enable(goal);
 
         // The player
-        player = game.add.sprite(200, 200, 'player');
+        player = game.add.sprite(50, stageHeight-50, 'player');
         window.player = player;
         player.animations.add('left', [0, 1, 2, 3], 10, true);
         player.animations.add('right', [5, 6, 7, 8], 10, true);
