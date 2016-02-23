@@ -7,35 +7,52 @@
 
 (function() {
 
-    // Game variables
-    var stageWidth = 800;
-    var stageHeight = 600;
-    var game = new Phaser.Game(stageWidth, stageHeight, Phaser.AUTO, 'game', {preload: preload, create: create, update: update});
+    // GAME VARIABLES
+    var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game', {preload: preload, create: create, update: update});
+    var levelIndex;
+    var gravities;
+    var gravityIndex;
     var player;
     var goal;
-    var levelIndex;
     var platforms;
     var downArrow;
     var cursors;
     var jumpButton;
     var flipTimer;
-    var facing = 'right';
-    var gravityDirection = {x: 0, y: 1};
+    var gravityDirection;
 
-    // Constants
+    // CONSTANTS
     var GRAVITY_STRENGTH = 500;
     var JUMP_VELOCITY = 300;
     var MOVE_VELOCITY = 250;
     var TIME_TO_FLIP = 6000;
     var WARNING_TIME = 3000;
-    var GRAVITY_DIRECTIONS = [{x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1}];
-    var ROTATIONS = [Math.PI*3.0/2.0, Math.PI/2, 0, Math.PI];
 
-    // Helper functions
+    // HELPER FUNCTIONS
+
+    // Gets the proper sprite rotation value given a gravity direction
+    function getRotation(dir) {
+        if (dir.x > 0 && dir.y === 0) {
+            return Math.PI*1.5;
+        }
+        if (dir.x < 0 && dir.y === 0) {
+            return Math.PI/2;
+        }
+        if (dir.x === 0 && dir.y > 0) {
+            return 0;
+        }
+        if (dir.x === 0 && dir.y < 0) {
+            return Math.PI;
+        }
+        return 0;
+    }
+
+    // Scales a vector (an object with x and y properties)
     function scaleVector(scale, vector) {
         return {x: scale*vector.x, y: scale*vector.y};
     }
 
+    // Determines if the player can jump based on the current gravity
     function playerCanJump() {
         if (gravityDirection.x === 0 && gravityDirection.y > 0) {
             return (player.body.touching.down);// || player.body.touching.right || player.body.touching.left);
@@ -51,6 +68,7 @@
         }
     }
 
+    // Displays & initializes the level with the given index
     function loadLevel(index) {
         levelIndex = index;
         var level = window._levels[index];
@@ -68,34 +86,37 @@
         goal.position.setTo(level.goal.x, level.goal.y);
         // Set initial gravity
         setGravity(level.gravity[0]);
+        gravities = level.gravity;
+        gravityIndex = 0;
     }
 
+    // Sets the gravity to be in the given direction (dir must be a unit vector)
     function setGravity(dir) {
         gravityDirection = dir;
         var gravity = scaleVector(GRAVITY_STRENGTH, dir);
         player.body.gravity.setTo(gravity.x, gravity.y);
+        player.rotation = getRotation(dir);
+        //player.scale.x = (index === 3) ? -1 : 1;
     }
 
-    function changeGravity(index) {
-        setGravity(GRAVITY_DIRECTIONS[index]);
-        player.rotation = ROTATIONS[index];
-        player.scale.x = (index === 3) ? -1 : 1;
-    }
-
+    // Displays an arrow indicating the next gravity direction and then changes the gravity
     function warnAndFlip() {
-        // warn and flip gravity
-        var index = Math.floor(Math.random() * 4);
-        downArrow.rotation = ROTATIONS[index];
+        gravityIndex = Math.min(gravityIndex+1, gravities.length-1);
+        var dir = gravities[gravityIndex];
+        downArrow.rotation = getRotation(dir);
         downArrow.alpha = 1;
         setTimeout(function() {
             downArrow.alpha = 0;
-            changeGravity(index);
+            setGravity(dir);
         }, WARNING_TIME);
     }
 
-    function goalReached() {
+    // Actions to perform when the goal is reached
+    function onGoalReached() {
         console.log('YOU WIN');
     }
+
+    // PHASER MAIN FUNCTIONS
 
     // Preload assets
     function preload() {
@@ -126,7 +147,7 @@
         player.anchor.setTo(0.5, 0.5);
 
         // Create the warning arrow
-        downArrow = game.add.sprite(stageWidth/2, stageHeight/2, 'arrow');
+        downArrow = game.add.sprite(400, 300, 'arrow');
         downArrow.alpha = 0;
         downArrow.scale.setTo(0.5, 0.5);
         downArrow.anchor.setTo(0.5, 0.5);
@@ -150,7 +171,7 @@
 
         // Check if goal reached
         if (game.physics.arcade.overlap(player, goal)) {
-            goalReached();
+            onGoalReached();
         }
 
         // Stop the player
@@ -160,7 +181,7 @@
             player.body.velocity.y = 0;
         }
 
-        // Handle moving input
+        // Handle walking input
         if (cursors.left.isDown) {
             if (gravityDirection.x === 0 && gravityDirection.y > 0) {
                 player.body.velocity.x = -MOVE_VELOCITY;
@@ -175,7 +196,6 @@
                 player.body.velocity.y = -MOVE_VELOCITY;
             }
             player.animations.play('left');
-            facing = 'left';
         } else if (cursors.right.isDown) {
             if (gravityDirection.x === 0 && gravityDirection.y > 0) {
                 player.body.velocity.x = MOVE_VELOCITY;
@@ -190,11 +210,11 @@
                 player.body.velocity.y = MOVE_VELOCITY;
             }
             player.animations.play('right');
-            facing = 'right';
         } else {
             player.animations.stop(null, true);
         }
 
+        // Handle jumping input
         if (jumpButton.isDown && playerCanJump()) {
             var jump = scaleVector(-JUMP_VELOCITY, gravityDirection);
             if (gravityDirection.x === 0) {
