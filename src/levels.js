@@ -12,6 +12,9 @@ window._levels = [
         goal: {x: 410, y: 130},
         gravity: [
             {x: 0, y: 1},
+            {x: 1, y: 0},
+            {x: -1, y: 0},
+            {x: 0, y: 1},
         ],
         platforms: [
             {x: 0, y: 0, width: 800, height: 20},

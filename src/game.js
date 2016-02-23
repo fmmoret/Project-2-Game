@@ -9,6 +9,8 @@
 
     // GAME VARIABLES
     var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game', {preload: preload, create: create, update: update});
+    var menu;
+    var playButton;
     var levelIndex;
     var gravities;
     var gravityIndex;
@@ -19,7 +21,7 @@
     var cursors;
     var jumpButton;
     var flipTimer;
-    var gravityDirection;
+    var gravityDirection = {x: 0, y: 0};
 
     // CONSTANTS
     var GRAVITY_STRENGTH = 500;
@@ -70,6 +72,7 @@
 
     // Displays & initializes the level with the given index
     function loadLevel(index) {
+        // Get the level data from the index
         levelIndex = index;
         var level = window._levels[index];
         // Place platforms
@@ -83,6 +86,7 @@
         platforms.setAll('body.immovable', true);
         // Place player & goal
         player.position.setTo(level.start.x, level.start.y);
+        player.visible = true;
         goal.position.setTo(level.goal.x, level.goal.y);
         // Set initial gravity
         setGravity(level.gravity[0]);
@@ -96,11 +100,11 @@
         var gravity = scaleVector(GRAVITY_STRENGTH, dir);
         player.body.gravity.setTo(gravity.x, gravity.y);
         player.rotation = getRotation(dir);
-        //player.scale.x = (index === 3) ? -1 : 1;
     }
 
     // Displays an arrow indicating the next gravity direction and then changes the gravity
     function warnAndFlip() {
+        if (!gravities || gravityIndex === gravities.length-1) return;
         gravityIndex = Math.min(gravityIndex+1, gravities.length-1);
         var dir = gravities[gravityIndex];
         downArrow.rotation = getRotation(dir);
@@ -114,6 +118,29 @@
     // Actions to perform when the goal is reached
     function onGoalReached() {
         console.log('YOU WIN');
+        displayMenu();
+    }
+
+    // Displays the menu
+    function displayMenu() {
+        if (platforms) platforms.destroy();
+        goal.position.setTo(-100, -100);
+        player.visible = false;
+        downArrow.alpha = 0;
+        menu.alpha = 1;
+        playButton.visible = true;
+    }
+
+    // Hides the menu!
+    function hideMenu() {
+        menu.alpha = 0;
+        playButton.visible = false;
+    }
+
+    // Handles clicking the 'play' button
+    function onPlayClicked() {
+        hideMenu();
+        loadLevel(0);
     }
 
     // PHASER MAIN FUNCTIONS
@@ -125,6 +152,8 @@
         game.load.baseURL = 'assets/';
         game.load.crossOrigin = 'anonymous';
 
+        game.load.image('menu', 'menu.png');
+        game.load.image('playButton', 'play-button.png');
         game.load.spritesheet('player', 'dude.png', 48, 48);
         game.load.image('goal', 'diamond.png');
         game.load.image('platform', 'platform.png');
@@ -133,6 +162,12 @@
 
     // Create the game objects
     function create() {
+        // The menu
+        menu = game.add.sprite(0, 0, 'menu');
+
+        // The 'play' button
+        playButton = game.add.button(264, 320, 'playButton', onPlayClicked);
+
         // The goal
         goal = game.add.sprite(0, 0, 'goal');
         game.physics.arcade.enable(goal);
@@ -160,8 +195,8 @@
         flipTimer = game.time.events.add(TIME_TO_FLIP, warnAndFlip);
         flipTimer.loop = true;
 
-        // Load the first level
-        loadLevel(0);
+        // Display the menu screen
+        displayMenu();
     }
 
 
