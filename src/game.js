@@ -11,7 +11,9 @@
     var STAGE_WIDTH = 800;
     var STAGE_HEIGHT = 600;
     var game = new Phaser.Game(STAGE_WIDTH, STAGE_HEIGHT, Phaser.AUTO, 'game', {preload: preload, create: create, update: update});
+    var playing = false;
     var loadingText;
+    var winText;
     var menu;
     var playButton;
     var levelIndex;
@@ -35,8 +37,7 @@
     var MOVE_VELOCITY = 250;
     var DEFAULT_TIME_TO_FLIP = 4000;
     var DEFAULT_WARNING_TIME = 2000;
-    var TIME_TO_FLIP;
-    var WARNING_TIME;
+    var WIN_TIME = 3000;
 
     // HELPER FUNCTIONS
 
@@ -80,12 +81,10 @@
 
     // Displays & initializes the level with the given index
     function loadLevel(index) {
+        // Clear the previous level
+        unloadLevel();
+        console.log('Loading: '+index);
         if (index < window._levels.length) {
-            // Reset events
-            if (flipTimer) {
-                timer = flipTimer.timer;
-                timer.events = [];
-            }
             // Get the level data from the index
             levelIndex = index;
             var level = window._levels[index];
@@ -110,17 +109,33 @@
             setGravity(level.gravity[0]);
             gravities = level.gravity;
             gravityIndex = 0;
-            // grab timer constants
-            TIME_TO_FLIP = level.TIME_TO_FLIP || DEFAULT_TIME_TO_FLIP;
-            WARNING_TIME = level.WARNING_TIME || DEFAULT_WARNING_TIME;
+            // Grab timer constants
+            var timeToFlip = level.timeToFlip || DEFAULT_TIME_TO_FLIP;
+            var warningTime = level.warningTime || DEFAULT_WARNING_TIME;
             // Set up gravity flipping timer
-            flipTimer = game.time.events.add(TIME_TO_FLIP, warnAndFlip);
+            flipTimer = game.time.events.add(timeToFlip, warnAndFlip.bind(null, warningTime));
             flipTimer.loop = true;
+            // Set the playing flag
+            playing = true;
         } else {
             // Beat the entire game
-            // showCredits()
-            console.log('Should show credits');
+            onGameFinished();
         }
+    }
+
+    // Unloads a level
+    function unloadLevel() {
+        // Clear the playing flag
+        playing = false;
+        // Clear events
+        if (flipTimer) {
+            flipTimer.timer.events = [];
+        }
+        // Remove game objects & sprites
+        if (platforms) platforms.destroy();
+        goal.position.setTo(-100, -100);
+        player.visible = false;
+        downArrow.alpha = 0;
     }
 
     // Sets the gravity to be in the given direction (dir must be a unit vector)
@@ -132,14 +147,14 @@
     }
 
     // Displays an arrow indicating the next gravity direction and then changes the gravity
-    function warnAndFlip() {
+    function warnAndFlip(warningTime) {
         if (!gravities) return;
         gravityIndex = (gravityIndex + 1) % gravities.length;
         var dir = gravities[gravityIndex];
         downArrow.rotation = getRotation(dir);
         downArrow.alpha = 1;
 
-        warnTimer = game.time.events.add(WARNING_TIME, function() {
+        warnTimer = game.time.events.add(warningTime, function() {
             downArrow.alpha = 0;
             setGravity(dir);
         });
@@ -147,16 +162,22 @@
 
     // Actions to perform when the goal is reached
     function onGoalReached() {
-        console.log('YOU WIN');
+        console.log('goal reached');
         loadLevel(levelIndex + 1);
+    }
+
+    // Actions to perform when the last level is finished
+    function onGameFinished() {
+        console.log('game finished');
+        winText.visible = true;
+        game.time.events.add(WIN_TIME, function() {
+            winText.visible = false;
+            displayMenu();
+        });
     }
 
     // Displays the menu
     function displayMenu() {
-        if (platforms) platforms.destroy();
-        goal.position.setTo(-100, -100);
-        player.visible = false;
-        downArrow.alpha = 0;
         menu.alpha = 1;
         playButton.visible = true;
     }
@@ -195,6 +216,11 @@
 
     // Create the game objects
     function create() {
+        // The win message
+        winText = game.add.text(400, 300, 'YOU BEAT THE GAME!', {font: '32pt Impact', fill: '#770000', align: 'center'});
+        winText.anchor.set(0.5);
+        winText.visible = false;
+
         // The menu
         menu = game.add.sprite(0, 0, 'menu');
 
@@ -228,6 +254,7 @@
 
         // Hide the loading message & display the menu screen
         loadingText.visible = false;
+        unloadLevel();
         displayMenu();
     }
 
@@ -236,7 +263,8 @@
     function update() {
         game.physics.arcade.collide(player, platforms);
 
-        if (player.position.x < 0 || player.position.x > STAGE_WIDTH ||
+        if (playing &&
+            player.position.x < 0 || player.position.x > STAGE_WIDTH ||
             player.position.y < 0 || player.position.y > STAGE_HEIGHT) {
 
             loadLevel(levelIndex);
