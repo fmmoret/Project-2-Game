@@ -78,8 +78,8 @@ window._levels = [
         platforms: [
             {"x":325,"y":585,"width":28,"height":10},
             {"x":523,"y":171,"width":9,"height":85},
-            {"x":593,"y":171,"width":9,"height":85},
-            {"x":523,"y":245,"width":73,"height":11}
+            {"x":623,"y":171,"width":9,"height":85},
+            {"x":523,"y":245,"width":103,"height":11}
         ]
     },
     // Level 4
