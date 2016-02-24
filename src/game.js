@@ -9,6 +9,7 @@
 
     // GAME VARIABLES
     var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game', {preload: preload, create: create, update: update});
+    var loadingText;
     var menu;
     var playButton;
     var levelIndex;
@@ -86,6 +87,7 @@
         platforms.setAll('body.immovable', true);
         // Place player & goal
         player.position.setTo(level.start.x, level.start.y);
+        player.body.velocity.setTo(0, 0);
         player.visible = true;
         goal.position.setTo(level.goal.x, level.goal.y);
         // Set initial gravity
@@ -149,6 +151,9 @@
     function preload() {
         game.stage.backgroundColor = '#ffffff';
 
+        loadingText = game.add.text(400, 300, 'Loading...', {fill: '#007700', align: 'center'});
+        loadingText.anchor.set(0.5);
+
         game.load.baseURL = 'assets/';
         game.load.crossOrigin = 'anonymous';
 
@@ -195,7 +200,8 @@
         flipTimer = game.time.events.add(TIME_TO_FLIP, warnAndFlip);
         flipTimer.loop = true;
 
-        // Display the menu screen
+        // Hide the loading message & display the menu screen
+        loadingText.visible = false;
         displayMenu();
     }
 
@@ -209,7 +215,7 @@
             onGoalReached();
         }
 
-        // Stop the player
+        // Stop the player's walking velocity
         if (gravityDirection.x === 0) {
             player.body.velocity.x = 0;
         } else if(gravityDirection.y === 0) {
