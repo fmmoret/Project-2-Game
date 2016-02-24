@@ -33,8 +33,10 @@
     var GRAVITY_STRENGTH = 500;
     var JUMP_VELOCITY = 300;
     var MOVE_VELOCITY = 250;
-    var TIME_TO_FLIP = 4000;
-    var WARNING_TIME = 2000;
+    var DEFAULT_TIME_TO_FLIP = 4000;
+    var DEFAULT_WARNING_TIME = 2000;
+    var TIME_TO_FLIP;
+    var WARNING_TIME;
 
     // HELPER FUNCTIONS
 
@@ -108,6 +110,9 @@
             setGravity(level.gravity[0]);
             gravities = level.gravity;
             gravityIndex = 0;
+            // grab timer constants
+            TIME_TO_FLIP = level.TIME_TO_FLIP || DEFAULT_TIME_TO_FLIP;
+            WARNING_TIME = level.WARNING_TIME || DEFAULT_WARNING_TIME;
             // Set up gravity flipping timer
             flipTimer = game.time.events.add(TIME_TO_FLIP, warnAndFlip);
             flipTimer.loop = true;

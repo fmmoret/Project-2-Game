@@ -83,5 +83,29 @@ window._levels = [
             {"x":523,"y":245,"width":73,"height":11}
         ]
     },
-
+    // Level 5
+    {
+        start: {x: 50, y: 300},
+        goal: {x: 300, y: 50},
+        TIME_TO_FLIP: 2000,
+        WARNING_TIME: 1000,
+        gravity: [
+            {x: -1, y: 0},
+            {x: 0, y: -1},
+            {x: 0, y: 1},
+            {x: 0, y: -1},
+            {x: -1, y: 0},
+        ],
+        platforms: [
+            {"x":0,"y":275,"width":10,"height":50},
+            {"x":409,"y":312,"width":3,"height":1},
+            {"x":391,"y":92,"width":0,"height":0},
+            {"x":462,"y":243,"width":0,"height":0},
+            {"x":235,"y":0,"width":8,"height":420},
+            {"x":240,"y":109,"width":206,"height":5},
+            {"x":336,"y":199,"width":8,"height":217},
+            {"x":337,"y":411,"width":458,"height":6},
+            {"x":706,"y":18,"width":67,"height":11}
+        ]
+    },
 ];
