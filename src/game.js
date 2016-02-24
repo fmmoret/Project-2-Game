@@ -8,7 +8,9 @@
 (function() {
 
     // GAME VARIABLES
-    var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game', {preload: preload, create: create, update: update});
+    var STAGE_HEIGHT = 600;
+    var STAGE_WIDTH = 800;
+    var game = new Phaser.Game(STAGE_WIDTH, STAGE_HEIGHT, Phaser.AUTO, 'game', {preload: preload, create: create, update: update});
     var menu;
     var playButton;
     var levelIndex;
@@ -21,14 +23,15 @@
     var cursors;
     var jumpButton;
     var flipTimer;
+    var warnTimer;
     var gravityDirection = {x: 0, y: 0};
 
     // CONSTANTS
     var GRAVITY_STRENGTH = 500;
     var JUMP_VELOCITY = 300;
     var MOVE_VELOCITY = 250;
-    var TIME_TO_FLIP = 6000;
-    var WARNING_TIME = 3000;
+    var TIME_TO_FLIP = 4000;
+    var WARNING_TIME = 2000;
 
     // HELPER FUNCTIONS
 
@@ -72,26 +75,46 @@
 
     // Displays & initializes the level with the given index
     function loadLevel(index) {
-        // Get the level data from the index
-        levelIndex = index;
-        var level = window._levels[index];
-        // Place platforms
-        if (platforms) platforms.destroy();
-        platforms = game.add.physicsGroup();
-        for (var i = 0; i < level.platforms.length; i++) {
-            var data = level.platforms[i];
-            var platform = platforms.create(data.x, data.y, 'platform');
-            platform.scale.setTo(data.width/100, data.height/100);
+        if (index < window._levels.length) {
+            // Reset events
+            if (flipTimer) {
+                timer = flipTimer.timer;
+                timer.events = [];
+            }
+            // Get the level data from the index
+            levelIndex = index;
+            var level = window._levels[index];
+            // Reset Arrow
+            downArrow.alpha = 0;
+            // Place platforms
+            if (platforms) platforms.destroy();
+            platforms = game.add.physicsGroup();
+            for (var i = 0; i < level.platforms.length; i++) {
+                var data = level.platforms[i];
+                var platform = platforms.create(data.x, data.y, 'platform');
+                platform.scale.setTo(data.width/100, data.height/100);
+            }
+            platforms.setAll('body.immovable', true);
+            // Place player & goal
+            player.position.setTo(level.start.x, level.start.y);
+            player.visible = true;
+            goal.position.setTo(level.goal.x, level.goal.y);
+            // Reset player velocity
+            player.body.velocity.x = 0;
+            player.body.velocity.y = 0;
+            // Set initial gravity
+            setGravity(level.gravity[0]);
+            gravities = level.gravity;
+            gravityIndex = 0;
+            // Set up gravity flipping timer
+            flipTimer = game.time.events.add(TIME_TO_FLIP, warnAndFlip);
+            flipTimer.loop = true;
+
+        } else {
+            // beat the entire game
+            // showCredits()
+            console.log('Should show credits');
         }
-        platforms.setAll('body.immovable', true);
-        // Place player & goal
-        player.position.setTo(level.start.x, level.start.y);
-        player.visible = true;
-        goal.position.setTo(level.goal.x, level.goal.y);
-        // Set initial gravity
-        setGravity(level.gravity[0]);
-        gravities = level.gravity;
-        gravityIndex = 0;
     }
 
     // Sets the gravity to be in the given direction (dir must be a unit vector)
@@ -104,12 +127,13 @@
 
     // Displays an arrow indicating the next gravity direction and then changes the gravity
     function warnAndFlip() {
-        if (!gravities || gravityIndex === gravities.length-1) return;
-        gravityIndex = Math.min(gravityIndex+1, gravities.length-1);
+        if (!gravities) return;
+        gravityIndex = (gravityIndex + 1) % gravities.length;
         var dir = gravities[gravityIndex];
         downArrow.rotation = getRotation(dir);
         downArrow.alpha = 1;
-        setTimeout(function() {
+
+        warnTimer = game.time.events.add(WARNING_TIME, function() {
             downArrow.alpha = 0;
             setGravity(dir);
         }, WARNING_TIME);
@@ -118,7 +142,7 @@
     // Actions to perform when the goal is reached
     function onGoalReached() {
         console.log('YOU WIN');
-        displayMenu();
+        loadLevel(levelIndex + 1);
     }
 
     // Displays the menu
@@ -178,7 +202,7 @@
         player.animations.add('right', [5, 6, 7, 8], 10, true);
         // Set up player physics
         game.physics.arcade.enable(player);
-        player.body.collideWorldBounds = true;
+        player.body.collideWorldBounds = false;
         player.anchor.setTo(0.5, 0.5);
 
         // Create the warning arrow
@@ -190,10 +214,8 @@
         // Set up input
         cursors = game.input.keyboard.createCursorKeys();
         jumpButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+        resetButton = game.input.keyboard.addKey(Phaser.Keyboard.R);
 
-        // Set up gravity flipping timer
-        flipTimer = game.time.events.add(TIME_TO_FLIP, warnAndFlip);
-        flipTimer.loop = true;
 
         // Display the menu screen
         displayMenu();
@@ -203,6 +225,12 @@
     // Main update loop
     function update() {
         game.physics.arcade.collide(player, platforms);
+
+        if (player.position.x < 0 || player.position.x > STAGE_WIDTH ||
+            player.position.y < 0 || player.position.y > STAGE_HEIGHT) {
+
+            loadLevel(levelIndex);
+        }
 
         // Check if goal reached
         if (game.physics.arcade.overlap(player, goal)) {
@@ -247,6 +275,11 @@
             player.animations.play('right');
         } else {
             player.animations.stop(null, true);
+        }
+
+        // Reset level
+        if (resetButton.isDown) {
+            loadLevel(levelIndex);
         }
 
         // Handle jumping input
